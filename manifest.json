@@ -1,0 +1,5 @@
+{
+"name":"营养 Pro","short_name":"营养Pro","start_url":"./index.html","display":"standalone",
+"background_color":"#f5f6fa","theme_color":"#f5f6fa","description":"个人营养、热量和体重记录工具",
+"icons":[{"src":"icon-180.png","sizes":"180x180","type":"image/png","purpose":"any maskable"}]
+}
