@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17181a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="营养Pro">
+<title>营养Pro 3.0</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#e9eaec;--card:#f4f5f6;--ink:#17181a;--muted:#74777b;--line:#d7d9dc}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:linear-gradient(145deg,#e5e6e8,#f4f4f5);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC",sans-serif}
+.app{max-width:760px;margin:auto;padding:calc(12px + env(safe-area-inset-top)) 15px calc(30px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;padding:8px 4px 14px}
+h1{font-size:31px;margin:0;font-weight:850;letter-spacing:-1px}.date{font-size:12px;color:var(--muted);margin-top:3px}
+.headBtns{display:flex;gap:7px}.iconbtn{width:42px;height:42px;border:1px solid #d1d3d6;border-radius:14px;background:linear-gradient(#fff,#dedfe1);font-size:18px;box-shadow:0 3px 8px #0001}
+.card{background:rgba(248,249,250,.94);border:1px solid #fff;border-radius:24px;padding:18px;margin:11px 0;box-shadow:0 10px 30px #0000000d,inset 0 1px #fff}
+.hero{display:grid;grid-template-columns:175px 1fr;gap:18px;align-items:center}
+.ring{width:158px;height:158px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#202225 var(--deg,0deg),#d5d7da 0);position:relative;box-shadow:inset 0 0 0 1px #fff,0 8px 20px #0001}.ring:after{content:"";position:absolute;inset:13px;background:var(--card);border-radius:50%}.ringtxt{position:relative;z-index:1;text-align:center}.ringtxt b{font-size:29px;display:block}.ringtxt span{font-size:11px;color:var(--muted)}
+.stats{display:grid;gap:12px}.stat{display:grid;grid-template-columns:58px 1fr 54px;gap:8px;align-items:center;font-size:12px}.bar{height:8px;background:#dfe1e4;border-radius:99px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,#25272a,#707378);border-radius:99px}.num{text-align:right;font-weight:750}
+h2{font-size:18px;margin:0 0 13px}.muted{color:var(--muted)}.small{font-size:11px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.btn{appearance:none;-webkit-appearance:none;border:1px solid #111317;border-radius:15px;padding:13px;background:linear-gradient(#383b3f,#202225);color:#fff;font-size:14px;font-weight:750;box-shadow:0 5px 12px #0002;cursor:pointer;touch-action:manipulation}.btn.secondary{border-color:#d1d3d6;background:linear-gradient(#fff,#dedfe2);color:#1c1e21;box-shadow:0 4px 10px #0001}.btn:active{transform:scale(.98)}
+input,select{width:100%;padding:12px;border:1px solid #d2d5d9;border-radius:13px;font-size:16px;background:#fff;outline:none;appearance:none}label{font-size:11px;color:var(--muted);display:block;margin:7px 0 5px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meal{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #e0e2e5}.meal:last-child{border:0}.empty{text-align:center;padding:20px;color:#9a9da1}
+.chartbox{height:205px;border-radius:17px;background:#f9fafb;border:1px solid #e1e3e5;padding:8px}canvas{width:100%;height:100%}.tabs{display:flex;gap:7px;margin-bottom:12px}.tab{flex:1;border:1px solid #d2d4d7;background:#e3e4e6;border-radius:11px;padding:8px;font-size:12px}.tab.on{background:#282a2d;color:#fff;border-color:#282a2d}
+.rangeTabs{display:flex;gap:6px;margin:-3px 0 10px}.range{border:1px solid #d3d5d8;background:#e5e6e8;border-radius:10px;padding:7px 14px;font-size:12px}.range.on{background:#282a2d;color:#fff;border-color:#282a2d}.legend{display:flex;gap:18px;justify-content:center;align-items:center;margin-top:8px;font-size:11px;color:#666}.legend span{display:flex;align-items:center;gap:5px}.legendDot{display:inline-block;width:8px;height:8px;border-radius:50%}.legendDot.p{background:#4f7cff}.legendDot.c{background:#20a464}.legendDot.f{background:#e58a22}.legendDot.kcal{background:#202225}.legendDot.weight{background:#7a7d82}
+dialog{border:0;border-radius:25px;width:min(94vw,560px);padding:0;background:#f4f5f6;box-shadow:0 25px 80px #0006}dialog::backdrop{background:#0007}.modal{padding:20px}.list{max-height:55vh;overflow:auto;margin-top:10px}.fooditem{display:block;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px solid #eee;padding:12px 4px;font-size:14px;cursor:pointer}.cat{font-size:11px;color:#777;margin:12px 2px 5px}
+.customGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.customHint{padding:10px 12px;border-radius:12px;background:#e8e9eb;color:#666;font-size:11px;line-height:1.5;margin-bottom:10px}
+.entryCard{padding:13px 0;border-bottom:1px solid #e1e2e4}.entryCard:last-child{border-bottom:0}.entryHead{display:flex;justify-content:space-between;align-items:flex-start}.entryHead b{font-size:15px}.entryKcal{font-size:18px;font-weight:800;margin:8px 0 7px}.entryMacros{display:flex;gap:7px;flex-wrap:wrap}.entryMacros span{font-size:11px;padding:5px 8px;border-radius:8px;background:#f0f1f3}.entryMacros .p{color:#315fdb}.entryMacros .c{color:#16824f}.entryMacros .f{color:#b66a12}.del{border:0;background:none;color:#888;font-size:22px;line-height:20px;padding:0 4px}
+.status{font-size:11px;padding:6px 9px;border-radius:999px;background:#e7e8ea;color:#666;display:inline-block;margin-top:4px}.status.ok{color:#16824f;background:#e4f3ec}.status.err{color:#a33;background:#f7e5e5}
+.authInfo{padding:12px;border-radius:14px;background:#e8e9eb;font-size:12px;margin-bottom:12px}.authBtns{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.toast{position:fixed;left:50%;bottom:calc(25px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(15px);background:#202225;color:#fff;padding:11px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:520px){.hero{grid-template-columns:140px 1fr}.ring{width:132px;height:132px}.ringtxt b{font-size:24px}.stat{grid-template-columns:52px 1fr 48px}}
+</style>
+</head>
+<body><div class="app">
+<header><div><h1>营养Pro</h1><div class="date" id="today"></div><div id="syncStatus" class="status">☁︎ 本地模式</div></div><div class="headBtns"><button type="button" class="iconbtn" id="account" title="账号与云同步">☁︎</button><button type="button" class="iconbtn" id="settings">⚙︎</button></div></header>
+
+<section class="card hero"><div class="ring" id="ring"><div class="ringtxt"><b id="kcal">0</b><span>kcal / 今日</span></div></div><div class="stats">
+<div class="stat"><span>蛋白质</span><div class="bar"><div class="fill" id="pb"></div></div><span class="num" id="pn">0g</span></div>
+<div class="stat"><span>碳水</span><div class="bar"><div class="fill" id="cb"></div></div><span class="num" id="cn">0g</span></div>
+<div class="stat"><span>脂肪</span><div class="bar"><div class="fill" id="fb"></div></div><span class="num" id="fn">0g</span></div>
+<div class="small muted" id="remain"></div></div></section>
+
+<section class="card"><h2>添加食物</h2><div class="formgrid"><div><label>餐次</label><select id="meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option></select></div><div><label>重量（g）</label><input id="grams" type="number" value="100" min="1" inputmode="decimal"></div></div>
+<label>食物</label><div class="grid"><button type="button" class="btn secondary" id="pick" style="width:100%;text-align:left">选择食物：燕麦片</button><button type="button" class="btn secondary" id="customBtn" style="width:100%">＋ 自定义</button></div>
+<div class="small muted" id="preview" style="margin:8px 0"></div>
+<div id="customBox" style="display:none"><div class="customHint">直接输入这次食物的营养数据即可。这里输入的 kcal / P / C / F 就是本次记录的实际数值。</div><div class="customGrid">
+<div><label>卡路里（kcal）</label><input id="customKcal" type="number" min="0" step=".1" inputmode="decimal"></div>
+<div><label>蛋白质（g）</label><input id="customP" type="number" min="0" step=".1" inputmode="decimal"></div>
+<div><label>碳水（g）</label><input id="customC" type="number" min="0" step=".1" inputmode="decimal"></div>
+<div><label>脂肪（g）</label><input id="customF" type="number" min="0" step=".1" inputmode="decimal"></div>
+</div></div>
+<button type="button" class="btn" id="add" style="width:100%">＋ 添加到今天</button></section>
+
+<section class="card"><h2>今日记录</h2><div id="entries"></div></section>
+
+<section class="card"><h2>近几天变化</h2><div class="tabs"><button type="button" class="tab on" data-m="kcal">热量</button><button type="button" class="tab" data-m="macro">三大营养素</button><button type="button" class="tab" data-m="weight">体重</button><button type="button" class="tab" data-m="water">喝水</button></div><div class="rangeTabs"><button type="button" class="range on" data-range="7">7天</button><button type="button" class="range" data-range="14">14天</button><button type="button" class="range" data-range="30">30天</button></div><div class="chartbox"><canvas id="chart" width="700" height="260"></canvas></div><div id="chartLegend" class="legend"></div><div class="small muted" id="chartNote" style="margin-top:8px"></div></section>
+
+<section class="card"><h2>快捷功能</h2><div class="grid"><button type="button" class="btn secondary" id="water">💧 喝水 250ml</button><button type="button" class="btn secondary" id="weight">⚖︎ 记录体重</button><button type="button" class="btn secondary" id="backup">↥ 备份数据</button><button type="button" class="btn secondary" id="reset">↺ 今日清空</button></div></section>
+<div class="source">食物数值为每100g标准参考值；生熟状态、品种、品牌和烹饪方式会造成差异。品牌食品请优先以包装营养标签为准。</div>
+</div>
+
+<dialog id="foodDlg"><div class="modal"><h2>选择食物</h2><input id="search" placeholder="搜索食物，例如：鸡胸、燕麦、香蕉"><button type="button" class="btn" id="addCustomFood" style="width:100%;margin-top:10px">＋ 自定义添加食物</button><div class="list" id="foodList"></div><button type="button" class="btn secondary" id="closeFood" style="width:100%;margin-top:12px">关闭</button></div></dialog>
+<dialog id="setDlg"><div class="modal"><h2>每日目标</h2><label>热量 kcal</label><input id="gk"><label>蛋白质 g</label><input id="gp"><label>碳水 g</label><input id="gc"><label>脂肪 g</label><input id="gf"><div class="grid" style="margin-top:14px"><button type="button" class="btn" id="saveSet">保存</button><button type="button" class="btn secondary" id="closeSet">关闭</button></div></div></dialog>
+<dialog id="customFoodDlg"><div class="modal"><h2>自定义添加食物</h2><div class="customHint">以下营养数据均按<strong>每100g</strong>填写，保存后会进入你的食物库，并可云同步。</div><label>食物名称</label><input id="cfName" placeholder="例如：自制鸡肉卷"><div class="customGrid">
+<div><label>卡路里（kcal / 100g）</label><input id="cfKcal" type="number" min="0" step=".1"></div><div><label>蛋白质（g / 100g）</label><input id="cfP" type="number" min="0" step=".1"></div><div><label>碳水（g / 100g）</label><input id="cfC" type="number" min="0" step=".1"></div><div><label>脂肪（g / 100g）</label><input id="cfF" type="number" min="0" step=".1"></div>
+</div><div class="grid" style="margin-top:14px"><button type="button" class="btn" id="saveCustomFood">保存食物</button><button type="button" class="btn secondary" id="closeCustomFood">取消</button></div></div></dialog>
+<dialog id="weiDlg"><div class="modal"><h2>记录体重</h2><label>体重 kg</label><input id="wi" type="number" step=".1" inputmode="decimal"><div class="grid" style="margin-top:14px"><button type="button" class="btn" id="saveW">保存</button><button type="button" class="btn secondary" id="closeW">关闭</button></div></div></dialog>
+<dialog id="authDlg"><div class="modal"><h2>账号与云同步</h2><div id="authBody"></div><button type="button" class="btn secondary" id="closeAuth" style="width:100%;margin-top:12px">关闭</button></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL="https://sxtrxqztcadwjoyftmlg.supabase.co";
+const SUPABASE_KEY="sb_publishable_d_3FgchBD14GQxLjVzMPMA_F8ifg5E3";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const FOODS=[
+["燕麦片","主食谷薯",389,16.9,66.3,6.9],["白米饭","主食谷薯",116,2.6,25.9,.3],["糙米饭","主食谷薯",123,2.7,25.6,1],["玉米","主食谷薯",112,3.9,22.5,1.2],["糯玉米","主食谷薯",139,3.2,28.9,1.1],["红薯","主食谷薯",86,1.6,20.1,.1],["紫薯","主食谷薯",87,1.7,20.1,.2],["土豆","主食谷薯",77,2,17.5,.1],["山药","主食谷薯",56,1.9,11.6,.2],["馒头","主食谷薯",223,7,47,1.1],["全麦面包","主食谷薯",247,13,41,4.2],["面条","主食谷薯",138,4.5,28,.7],["意大利面","主食谷薯",158,5.8,30.9,.9],["米粉","主食谷薯",109,.9,24.9,.2],["荞麦面","主食谷薯",99,5.1,21.4,.5],
+["鸡胸肉（熟）","肉禽",165,31,0,3.6],["鸡胸肉（生）","肉禽",120,22.5,0,2.6],["鸡腿肉（去皮）","肉禽",135,24,0,3],["猪里脊","肉禽",143,20.3,1.5,6.2],["猪五花肉","肉禽",518,9.3,0,53],["牛里脊","肉禽",170,26,0,7],["牛腱子","肉禽",150,31,0,3.5],["牛瘦肉","肉禽",198,26,1,8.3],["羊腿肉","肉禽",188,24.8,1,7.9],["鸡翅","肉禽",186,24.5,1,7.8],["鸭胸肉","肉禽",184,24.2,1,7.8],
+["鸡蛋","蛋奶",143,12.6,.7,9.5],["蛋清","蛋奶",52,10.9,.7,.2],["蛋黄","蛋奶",322,15.9,3.6,26.5],["牛奶","蛋奶",61,3.2,4.8,3.3],["低脂牛奶","蛋奶",42,3.4,5,1],["脱脂牛奶","蛋奶",35,3.4,5,.1],
+["无糖豆浆","豆类豆制品",31,3,1.2,1.6],["豆腐","豆类豆制品",76,8.1,1.9,4.2],["豆干","豆类豆制品",140,16.2,4.2,7.2],["腐竹","豆类豆制品",459,44.6,22.3,21.7],["黄豆（干）","豆类豆制品",390,35,34,16],["毛豆","豆类豆制品",135,12.5,10.4,5.2],
+["西兰花","蔬菜",34,2.8,6.6,.4],["菠菜","蔬菜",23,2.9,3.6,.4],["生菜","蔬菜",15,1.4,2.9,.2],["番茄","蔬菜",18,.9,3.9,.2],["黄瓜","蔬菜",15,.7,3.6,.1],["胡萝卜","蔬菜",41,.9,9.6,.2],["青椒","蔬菜",20,.9,4.6,.2],["茄子","蔬菜",25,1,5.9,.2],["大白菜","蔬菜",13,1.5,2.4,.2],["香菇","蔬菜",22,2.2,3.3,.3],
+["苹果","水果",52,.3,13.8,.2],["香蕉","水果",89,1.1,22.8,.3],["橙子","水果",47,.9,11.8,.1],["葡萄","水果",69,.7,18.1,.2],["草莓","水果",32,.7,7.7,.3],["蓝莓","水果",57,.7,14.5,.3],["猕猴桃","水果",61,1.1,14.7,.5],["芒果","水果",60,.8,15,.4],["西瓜","水果",30,.6,7.6,.2],["牛油果","水果",160,2,8.5,14.7],
+["杏仁","坚果种子",579,21.2,21.6,49.9],["核桃","坚果种子",654,15.2,13.7,65.2],["腰果","坚果种子",553,18.2,30.2,43.9],["开心果","坚果种子",562,20.2,27.2,45.3],["花生","坚果种子",567,25.8,16.1,49.2],["南瓜子","坚果种子",559,30.2,10.7,49.1],["芝麻","坚果种子",573,17.7,23.4,49.7],
+["白水","饮品",0,0,0,0],["黑咖啡","饮品",2,.3,0,0],["无糖茶","饮品",1,0,.2,0],["橙汁","饮品",45,.7,10.4,.2],["可乐","饮品",42,0,10.6,0],["无糖可乐","饮品",0,0,0,0],
+["薯片","加工食品",536,7,53,35],["黑巧克力","加工食品",598,7.8,46,43],["方便面","加工食品",448,9.5,60,19],["蛋糕","加工食品",350,6,50,14]
+].map(x=>({name:x[0],cat:x[1],kcal:x[2],p:x[3],c:x[4],f:x[5]}));
+
+let S;try{S=JSON.parse(localStorage.getItem("nutritionPro2")||"null")}catch(e){S=null}
+if(!S)S={entries:[],weights:{},water:{},goals:{kcal:2200,p:140,c:250,f:70},selected:"燕麦片",customFoods:[]};
+S.entries??=[];S.weights??={};S.water??={};S.customFoods??=[];S.goals??={kcal:2200,p:140,c:250,f:70};
+S.goals={kcal:S.goals.kcal??2200,p:S.goals.p??140,c:S.goals.c??250,f:S.goals.f??70};
+let currentUser=null,currentChart="kcal",chartRange=7,customMode=false,syncing=false;
+
+const $=id=>document.getElementById(id);
+const day=()=>{let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function save(){try{localStorage.setItem("nutritionPro2",JSON.stringify(S))}catch(e){}}
+function toast(t){let e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>e.classList.remove("show"),1700)}
+function openDlg(d){try{d.showModal()}catch(e){d.setAttribute("open","")}}
+function closeDlg(d){try{d.close()}catch(e){d.removeAttribute("open")}}
+function food(){return FOODS.find(f=>f.name===S.selected)||S.customFoods.find(f=>f.name===S.selected)||FOODS[0]}
+function totals(d=day()){let a={kcal:0,p:0,c:0,f:0};S.entries.filter(e=>e.date===d).forEach(e=>{a.kcal+=+e.kcal||0;a.p+=+e.p||0;a.c+=+e.c||0;a.f+=+e.f||0});return a}
+function calc(){let f=food(),m=(+($("grams").value)||0)/100;return{kcal:f.kcal*m,p:f.p*m,c:f.c*m,f:f.f*m}}
+function setStatus(t,kind=""){let e=$("syncStatus");e.textContent=t;e.className="status "+kind}
+function render(){
+ let t=totals(),g=S.goals;
+ $("today").textContent=new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"short"});
+ $("kcal").textContent=Math.round(t.kcal);$("ring").style.setProperty("--deg",Math.min(360,t.kcal/Math.max(1,g.kcal)*360)+"deg");
+ [["pb",t.p,g.p,"pn"],["cb",t.c,g.c,"cn"],["fb",t.f,g.f,"fn"]].forEach(r=>{$(r[0]).style.width=Math.min(100,r[1]/Math.max(1,r[2])*100)+"%";$(r[3]).textContent=r[1].toFixed(1)+"g"});
+ $("remain").textContent="剩余 "+Math.max(0,Math.round(g.kcal-t.kcal))+" kcal";
+ if(customMode){$("pick").textContent="选择食物";$("preview").textContent="自定义模式：直接输入本次 kcal / P / C / F";$("customBox").style.display="block"}
+ else{let v=calc();$("pick").textContent="选择食物："+food().name;$("preview").textContent=($("grams").value||0)+"g · "+v.kcal.toFixed(0)+" kcal · 蛋白质 "+v.p.toFixed(1)+"g · 碳水 "+v.c.toFixed(1)+"g · 脂肪 "+v.f.toFixed(1)+"g";$("customBox").style.display="none"}
+ let es=S.entries.filter(e=>e.date===day());
+ $("entries").innerHTML=es.length?es.map((e)=>`<div class="entryCard"><div class="entryHead"><div><b>${esc(e.food)}</b><div class="small muted">${esc(e.meal)} · ${e.grams}g</div></div><button type="button" class="del" data-id="${esc(e.id||"")}" data-index="${S.entries.indexOf(e)}">×</button></div><div class="entryKcal">${Math.round(e.kcal)} kcal</div><div class="entryMacros"><span class="p">蛋白质 ${(+e.p).toFixed(1)}g</span><span class="c">碳水 ${(+e.c).toFixed(1)}g</span><span class="f">脂肪 ${(+e.f).toFixed(1)}g</span></div></div>`).join(""):'<div class="empty">今天还没有记录</div>';
+ $("entries").querySelectorAll(".del").forEach(b=>b.onclick=async()=>{let i=+b.dataset.index,e=S.entries[i];if(currentUser&&e.id){let r=await sb.from("food_entries").delete().eq("id",e.id);if(r.error){toast("云端删除失败，未删除");return}}S.entries.splice(i,1);save();render();toast("已删除")});
+ draw(currentChart);
+}
+function foodList(){
+ let q=$("search").value.trim().toLowerCase(),all=FOODS.filter(f=>!q||f.name.toLowerCase().includes(q)),out="",groups={};
+ all.forEach(f=>(groups[f.cat]??=[]).push(f));
+ Object.keys(groups).forEach(cat=>{out+=`<div class="cat">${esc(cat)}</div>`;groups[cat].forEach(f=>out+=`<button type="button" class="fooditem" data-food="${encodeURIComponent(f.name)}"><b>${esc(f.name)}</b><span class="small muted"> · ${f.kcal} kcal · P ${f.p}g · C ${f.c}g · F ${f.f}g /100g</span></button>`)});
+ let custom=S.customFoods.filter(f=>!q||f.name.toLowerCase().includes(q));
+ if(custom.length){out+='<div class="cat">我的自定义食物</div>';custom.forEach(f=>out+=`<div style="display:flex;background:#fff;border-bottom:1px solid #eee"><button type="button" class="fooditem" data-food="${encodeURIComponent(f.name)}" style="flex:1;border-bottom:0"><b>${esc(f.name)}</b><span class="small muted"> · ${f.kcal} kcal · P ${f.p}g · C ${f.c}g · F ${f.f}g /100g</span></button><button type="button" data-custom="${encodeURIComponent(f.name)}" style="border:0;background:none;color:#999;padding:0 13px">删除</button></div>`) }
+ $("foodList").innerHTML=out||'<div class="empty">没有找到</div>';
+ $("foodList").querySelectorAll(".fooditem").forEach(b=>b.onclick=()=>{S.selected=decodeURIComponent(b.dataset.food);save();customMode=false;closeDlg($("foodDlg"));render();toast("已选择 "+S.selected)});
+ $("foodList").querySelectorAll("[data-custom]").forEach(b=>b.onclick=async()=>{let n=decodeURIComponent(b.dataset.custom);if(!confirm("删除自定义食物「"+n+"」？"))return;if(currentUser){let r=await sb.from("custom_foods").delete().eq("user_id",currentUser.id).eq("name",n);if(r.error){toast("云端删除失败");return}}S.customFoods=S.customFoods.filter(f=>f.name!==n);if(S.selected===n)S.selected=FOODS[0].name;save();foodList();render();toast("已删除")});
+}
+
+async function cloudLoad(){
+ if(!currentUser)return;
+ let uid=currentUser.id;
+ let [en,cf,wa,we,go]=await Promise.all([
+  sb.from("food_entries").select("*").eq("user_id",uid).order("created_at"),
+  sb.from("custom_foods").select("*").eq("user_id",uid).order("name"),
+  sb.from("water_entries").select("*").eq("user_id",uid).order("entry_date"),
+  sb.from("weight_entries").select("*").eq("user_id",uid).order("entry_date"),
+  sb.from("user_goals").select("*").eq("user_id",uid).maybeSingle()
+ ]);
+ let err=[en,cf,wa,we,go].find(x=>x.error);if(err)throw err.error;
+ let hasCloud=en.data.length||cf.data.length||wa.data.length||we.data.length||go.data;
+ let hasLocal=S.entries.length||S.customFoods.length||Object.keys(S.water).length||Object.keys(S.weights).length;
+ if(!hasCloud&&hasLocal){await cloudPushAll();return}
+ if(hasCloud){
+  S.entries=en.data.map(e=>({id:e.id,date:e.entry_date,meal:e.meal,food:e.food,grams:e.grams,kcal:e.kcal,p:e.protein,c:e.carbs,f:e.fat}));
+  S.customFoods=cf.data.map(f=>({id:f.id,name:f.name,cat:"我的自定义食物",kcal:f.kcal,p:f.protein,c:f.carbs,f:f.fat}));
+  S.water={};wa.data.forEach(r=>S.water[r.entry_date]=(S.water[r.entry_date]||0)+(Number(r.amount_ml)||0));
+  S.weights={};we.data.forEach(r=>S.weights[r.entry_date]=Number(r.weight));
+  if(go.data)S.goals={kcal:go.data.kcal||2200,p:go.data.protein||140,c:go.data.carbs||250,f:go.data.fat||70};
+  if(!S.customFoods.some(f=>f.name===S.selected)&&!FOODS.some(f=>f.name===S.selected))S.selected=FOODS[0].name;
+  S.cloudPending=false;save();
+ }else{await cloudSaveGoals()}
+}
+
+async function cloudPushAll(){
+ if(!currentUser||syncing)return;
+ syncing=true;setStatus("☁︎ 正在同步…");
+ try{
+  let uid=currentUser.id;
+  await sb.from("food_entries").delete().eq("user_id",uid);
+  await sb.from("custom_foods").delete().eq("user_id",uid);
+  await sb.from("water_entries").delete().eq("user_id",uid);
+  await sb.from("weight_entries").delete().eq("user_id",uid);
+  for(let e of S.entries){let r=await sb.from("food_entries").insert({user_id:uid,entry_date:e.date,meal:e.meal,food:e.food,grams:e.grams,kcal:e.kcal,protein:e.p,carbs:e.c,fat:e.f}).select().single();if(r.error)throw r.error;e.id=r.data.id}
+  for(let f of S.customFoods){let r=await sb.from("custom_foods").insert({user_id:uid,name:f.name,kcal:f.kcal,protein:f.p,carbs:f.c,fat:f.f}).select().single();if(r.error)throw r.error;f.id=r.data.id}
+  for(let d in S.water){if(S.water[d]>0){let r=await sb.from("water_entries").insert({user_id:uid,entry_date:d,amount_ml:S.water[d]});if(r.error)throw r.error}}
+  for(let d in S.weights){if(S.weights[d]>0){let r=await sb.from("weight_entries").insert({user_id:uid,entry_date:d,weight:S.weights[d]});if(r.error)throw r.error}}
+  await cloudSaveGoals();
+  S.cloudPending=false;save();setStatus("☁︎ 已同步","ok");render();
+ }catch(e){console.error(e);S.cloudPending=true;save();setStatus("☁︎ 同步失败","err");toast("已保存到本机，云同步失败")}
+ finally{syncing=false}
+}
+async function cloudSaveGoals(){
+ if(!currentUser)return;
+ let r=await sb.from("user_goals").upsert({user_id:currentUser.id,kcal:S.goals.kcal,protein:S.goals.p,carbs:S.goals.c,fat:S.goals.f,water_ml:2000},{onConflict:"user_id"});
+ if(r.error)throw r.error;
+}
+async function cloudAddEntry(e){
+ if(!currentUser){return}
+ let r=await sb.from("food_entries").insert({user_id:currentUser.id,entry_date:e.date,meal:e.meal,food:e.food,grams:e.grams,kcal:e.kcal,protein:e.p,carbs:e.c,fat:e.f}).select().single();
+ if(r.error)throw r.error;e.id=r.data.id;
+}
+async function cloudSaveCustom(f){
+ if(!currentUser)return;
+ let old=await sb.from("custom_foods").select("id").eq("user_id",currentUser.id).eq("name",f.name).maybeSingle();
+ if(old.error)throw old.error;
+ let r=old.data?await sb.from("custom_foods").update({kcal:f.kcal,protein:f.p,carbs:f.c,fat:f.fat}).eq("id",old.data.id).select().single():await sb.from("custom_foods").insert({user_id:currentUser.id,name:f.name,kcal:f.kcal,protein:f.p,carbs:f.c,fat:f.fat}).select().single();
+ if(r.error)throw r.error;f.id=r.data.id;
+}
+async function cloudWater(d,v){
+ if(!currentUser)return;
+ let a=await sb.from("water_entries").delete().eq("user_id",currentUser.id).eq("entry_date",d);if(a.error)throw a.error;
+ let r=await sb.from("water_entries").insert({user_id:currentUser.id,entry_date:d,amount_ml:v});if(r.error)throw r.error;
+}
+async function cloudWeight(d,v){
+ if(!currentUser)return;
+ let a=await sb.from("weight_entries").delete().eq("user_id",currentUser.id).eq("entry_date",d);if(a.error)throw a.error;
+ let r=await sb.from("weight_entries").insert({user_id:currentUser.id,entry_date:d,weight:v});if(r.error)throw r.error;
+}
+
+function authRender(){
+ if(currentUser){
+  $("authBody").innerHTML=`<div class="authInfo">当前账号<br><strong>${esc(currentUser.email||"")}</strong><br><span class="small muted">数据会自动同步到云端</span></div><button type="button" class="btn" id="syncNow" style="width:100%">☁︎ 立即同步</button><button type="button" class="btn secondary" id="logout" style="width:100%;margin-top:9px">退出登录</button>`;
+  $("syncNow").onclick=async()=>{await cloudPushAll();toast("同步完成")};
+  $("logout").onclick=async()=>{await sb.auth.signOut();closeDlg($("authDlg"));toast("已退出登录")};
+ }else{
+  $("authBody").innerHTML=`<div class="authInfo">登录后可以在不同设备之间同步你的饮食、体重、喝水、自定义食物和每日目标。</div><label>邮箱</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>密码</label><input id="authPass" type="password" autocomplete="current-password" placeholder="至少6位"><div class="authBtns"><button type="button" class="btn" id="login">登录</button><button type="button" class="btn secondary" id="register">注册</button></div><div class="small muted" style="margin-top:10px">如果注册后没有立即登录，请先检查邮箱验证邮件。</div>`;
+  $("login").onclick=authLogin;$("register").onclick=authRegister;
+ }
+}
+async function authLogin(){
+ let email=$("authEmail").value.trim(),password=$("authPass").value;
+ if(!email||!password){toast("请输入邮箱和密码");return}
+ let r=await sb.auth.signInWithPassword({email,password});if(r.error){toast(r.error.message);return}
+ closeDlg($("authDlg"));
+}
+async function authRegister(){
+ let email=$("authEmail").value.trim(),password=$("authPass").value;
+ if(!email||password.length<6){toast("请输入邮箱，密码至少6位");return}
+ let r=await sb.auth.signUp({email,password});if(r.error){toast(r.error.message);return}
+ if(r.data.session){toast("注册成功");closeDlg($("authDlg"))}else toast("注册成功，请查收验证邮件");
+}
+async function initAuth(){
+ let r=await sb.auth.getSession();
+ if(r.error){setStatus("☁︎ 本地模式","err");return}
+ await handleSession(r.data.session);
+ sb.auth.onAuthStateChange((event,session)=>setTimeout(()=>handleSession(session),0));
+}
+async function handleSession(session){
+ currentUser=session?.user||null;
+ $("account").textContent=currentUser?"☁✓":"☁︎";
+ $("account").title=currentUser?"已登录："+(currentUser.email||""):"账号与云同步";
+ if(!currentUser){setStatus("☁︎ 本地模式");return}
+ setStatus("☁︎ 正在同步…");
+ try{
+  if(S.cloudPending)await cloudPushAll();else await cloudLoad();
+  setStatus("☁︎ 已同步","ok");render();
+ }catch(e){console.error(e);setStatus("☁︎ 云同步失败","err");toast("云同步失败，当前数据仍保存在本机")}
+}
+
+$("pick").onclick=()=>{customMode=false;render();$("search").value="";foodList();openDlg($("foodDlg"))};
+$("customBtn").onclick=()=>{customMode=!customMode;render();if(customMode)$("customKcal").focus()};
+$("closeFood").onclick=()=>closeDlg($("foodDlg"));$("search").oninput=foodList;
+$("addCustomFood").onclick=()=>{closeDlg($("foodDlg"));["cfName","cfKcal","cfP","cfC","cfF"].forEach(id=>$(id).value="");openDlg($("customFoodDlg"));$("cfName").focus()};
+$("closeCustomFood").onclick=()=>closeDlg($("customFoodDlg"));
+$("saveCustomFood").onclick=async()=>{
+ let n=$("cfName").value.trim(),k=+$("cfKcal").value,p=+$("cfP").value,c=+$("cfC").value,f=+$("cfF").value;
+ if(!n||[k,p,c,f].some(v=>!isFinite(v)||v<0)){toast("请完整填写数据");return}
+ if(S.customFoods.some(x=>x.name===n)||FOODS.some(x=>x.name===n)){toast("已有同名食物");return}
+ let obj={name:n,cat:"我的自定义食物",kcal:k,p,c,f};S.customFoods.push(obj);S.selected=n;save();closeDlg($("customFoodDlg"));render();
+ if(currentUser)try{await cloudSaveCustom(obj);save();setStatus("☁︎ 已同步","ok");toast("✓ 已添加并同步")}catch(e){S.cloudPending=true;save();setStatus("☁︎ 待同步","err");toast("已保存本机，稍后同步")}
+ else toast("✓ 已添加 "+n);
+};
+$("grams").oninput=render;["customKcal","customP","customC","customF"].forEach(id=>$(id).oninput=()=>customMode&&render());
+$("add").onclick=async()=>{
+ let grams=+$("grams").value;if(!isFinite(grams)||grams<=0){toast("请输入有效重量");return}
+ let e;
+ if(customMode){let k=+$("customKcal").value,p=+$("customP").value,c=+$("customC").value,f=+$("customF").value;if([k,p,c,f].some(v=>!isFinite(v)||v<0)){toast("请把四项数据填写完整");return}e={date:day(),meal:$("meal").value,food:"自定义",grams,kcal:k,p,c,f,custom:true}}
+ else{let f=food(),v=calc();e={date:day(),meal:$("meal").value,food:f.name,grams,kcal:v.kcal,p:v.p,c:v.c,f:v.f}}
+ S.entries.push(e);save();render();toast("✓ 已添加 "+e.food);
+ if(currentUser)try{await cloudAddEntry(e);save();setStatus("☁︎ 已同步","ok")}catch(err){S.cloudPending=true;save();setStatus("☁︎ 待同步","err");toast("本机已保存，云端稍后同步")}
+};
+$("settings").onclick=()=>{$("gk").value=S.goals.kcal;$("gp").value=S.goals.p;$("gc").value=S.goals.c;$("gf").value=S.goals.f;openDlg($("setDlg"))};
+$("closeSet").onclick=()=>closeDlg($("setDlg"));
+$("saveSet").onclick=async()=>{S.goals={kcal:+$("gk").value||2200,p:+$("gp").value||140,c:+$("gc").value||250,f:+$("gf").value||70};save();closeDlg($("setDlg"));render();if(currentUser)try{await cloudSaveGoals();setStatus("☁︎ 已同步","ok")}catch(e){S.cloudPending=true;save();toast("目标已保存本机，云同步失败")}else toast("目标已保存")};
+$("water").onclick=async()=>{let d=day();S.water[d]=(S.water[d]||0)+250;save();render();toast("今日饮水 "+S.water[d]+" ml");if(currentUser)try{await cloudWater(d,S.water[d]);setStatus("☁︎ 已同步","ok")}catch(e){S.cloudPending=true;save();setStatus("☁︎ 待同步","err")}};
+$("weight").onclick=()=>{$("wi").value=S.weights[day()]||"";openDlg($("weiDlg"))};$("closeW").onclick=()=>closeDlg($("weiDlg"));
+$("saveW").onclick=async()=>{let v=+$("wi").value;if(v<=0){toast("请输入有效体重");return}let d=day();S.weights[d]=v;save();closeDlg($("weiDlg"));currentChart="weight";document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.m==="weight"));render();toast("体重已保存");if(currentUser)try{await cloudWeight(d,v);setStatus("☁︎ 已同步","ok")}catch(e){S.cloudPending=true;save();setStatus("☁︎ 待同步","err")}};
+$("backup").onclick=()=>{let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));a.download="营养Pro备份-"+day()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("备份已生成")};
+$("reset").onclick=async()=>{if(!confirm("确定清空今天所有记录？"))return;if(currentUser){let r=await sb.from("food_entries").delete().eq("user_id",currentUser.id).eq("entry_date",day());if(r.error){toast("云端删除失败，未清空");return}}S.entries=S.entries.filter(e=>e.date!==day());save();render();toast("今日已清空")};
+$("account").onclick=()=>{authRender();openDlg($("authDlg"))};$("closeAuth").onclick=()=>closeDlg($("authDlg"));
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{currentChart=b.dataset.m;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.m===currentChart));draw(currentChart)});
+document.querySelectorAll(".range").forEach(b=>b.onclick=()=>{chartRange=+b.dataset.range;document.querySelectorAll(".range").forEach(x=>x.classList.toggle("on",x===b));draw(currentChart)});
+
+function draw(mode){
+ let c=$("chart"),box=c.parentElement,rect=box.getBoundingClientRect(),W=Math.max(320,Math.floor(rect.width-16)),H=190,dpr=devicePixelRatio||1;
+ c.width=W*dpr;c.height=H*dpr;c.style.width="100%";c.style.height=H+"px";let x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+ let ds=[];for(let i=chartRange-1;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);ds.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"))}
+ let labels=ds.map(d=>d.slice(5).replace("-","/")),series;
+ if(mode==="kcal")series=[{name:"热量",data:ds.map(d=>totals(d).kcal),color:"#202225"}];
+ else if(mode==="weight")series=[{name:"体重",data:ds.map(d=>S.weights[d]||null),color:"#7a7d82"}];
+ else if(mode==="water")series=[{name:"喝水量",data:ds.map(d=>+(S.water[d]||0)),color:"#4f7cff"}];
+ else series=[{name:"蛋白质",data:ds.map(d=>totals(d).p),color:"#4f7cff"},{name:"碳水",data:ds.map(d=>totals(d).c),color:"#20a464"},{name:"脂肪",data:ds.map(d=>totals(d).f),color:"#e58a22"}];
+ let vals=series.flatMap(s=>s.data.filter(v=>v!=null&&isFinite(v))),max=Math.max(...vals,1),min=0;if(mode==="weight"&&vals.length){min=Math.max(0,Math.floor(Math.min(...vals)-1));max=Math.max(max,Math.ceil(Math.max(...vals)+1))}else max*=1.15;
+ let L=38,R=10,T=20,B=30,pw=(W-L-R)/Math.max(1,chartRange-1),ph=H-T-B;x.font="11px -apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif";x.strokeStyle="#dfe1e4";
+ for(let i=0;i<=4;i++){let yy=T+ph*i/4;x.beginPath();x.moveTo(L,yy);x.lineTo(W-R,yy);x.stroke();x.fillStyle="#8a8d91";x.fillText(Math.round(max-(max-min)*i/4),4,yy+4)}
+ let step=Math.max(1,Math.ceil(chartRange/7));labels.forEach((l,i)=>{if(i%step&&i!==labels.length-1)return;x.fillStyle="#888";x.fillText(l,Math.max(L,i*pw+L-14),H-8)});
+ series.forEach(s=>{x.strokeStyle=s.color;x.lineWidth=2.5;x.beginPath();let started=false;s.data.forEach((v,i)=>{if(v==null||!isFinite(v)){started=false;return}let xx=L+i*pw,yy=T+ph-(v-min)/(max-min||1)*ph;if(!started){x.moveTo(xx,yy);started=true}else x.lineTo(xx,yy)});x.stroke();s.data.forEach((v,i)=>{if(v==null||!isFinite(v))return;let xx=L+i*pw,yy=T+ph-(v-min)/(max-min||1)*ph;x.fillStyle=s.color;x.beginPath();x.arc(xx,yy,2.5,0,Math.PI*2);x.fill()})});
+ $("chartLegend").innerHTML=mode==="macro"?'<span><i class="legendDot p"></i>蛋白质</span><span><i class="legendDot c"></i>碳水</span><span><i class="legendDot f"></i>脂肪</span>':mode==="kcal"?'<span><i class="legendDot kcal"></i>热量</span>':mode==="water"?'<span><i class="legendDot weight"></i>喝水量</span>':'<span><i class="legendDot weight"></i>体重</span>';
+ $("chartNote").textContent=mode==="kcal"?"近"+chartRange+"天每日热量摄入":mode==="weight"?"近"+chartRange+"天体重记录":mode==="water"?"近"+chartRange+"天每日饮水量":"近"+chartRange+"天三大营养素摄入";
+}
+window.addEventListener("resize",()=>draw(currentChart));
+render();initAuth();
+</script>
+</body></html>
