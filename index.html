@@ -45,7 +45,7 @@
 <div class="source">营养数值为参考值（通常按每100g/100ml）；品牌食品请以包装营养成分表为准。</div>
 </div>
 
-<dialog id="foodDlg"><div class="modal"><div class="modalhead"><h2>选择食物</h2><button class="close" onclick="foodDlg.close()">关闭</button></div><input id="foodSearch" placeholder="搜索食物"><div class="list" id="foodList"></div></div></dialog>
+<dialog id="foodDlg"><div class="modal"><div class="modalhead"><h2>选择食物</h2><button class="close" onclick="foodDlg.close()">关闭</button></div><input id="foodSearch" placeholder="搜索食物"><button class="btn secondary" id="addCustomFoodBtn" style="width:100%;margin:8px 0">＋ 自定义食物</button><div class="list" id="foodList"></div></div></dialog>
 <dialog id="setDlg"><div class="modal"><div class="modalhead"><h2>每日目标</h2><button class="close" onclick="setDlg.close()">关闭</button></div><div class="goalGrid"><input id="gk" type="number" placeholder="热量 kcal"><input id="gp" type="number" placeholder="蛋白质 g"><input id="gc" type="number" placeholder="碳水 g"><input id="gf" type="number" placeholder="脂肪 g"></div><button class="btn" id="saveGoals" style="width:100%;margin-top:10px">保存目标</button></div></dialog>
 <dialog id="customFoodDlg"><div class="modal"><div class="modalhead"><h2>添加自定义食物</h2><button class="close" onclick="customFoodDlg.close()">关闭</button></div><input id="fn" placeholder="食物名称"><div class="customGrid" style="margin-top:10px"><input id="fk" type="number" placeholder="每100g kcal"><input id="fp" type="number" placeholder="蛋白质 g"><input id="fc" type="number" placeholder="碳水 g"><input id="ff" type="number" placeholder="脂肪 g"></div><button class="btn" id="saveCustomFood" style="width:100%;margin-top:10px">保存</button></div></dialog>
 <dialog id="weiDlg"><div class="modal"><div class="modalhead"><h2>记录体重</h2><button class="close" onclick="weiDlg.close()">关闭</button></div><input id="weight" type="number" step="0.1" placeholder="kg"><button class="btn" id="saveWeight" style="width:100%;margin-top:10px">保存</button></div></dialog>
@@ -69,12 +69,12 @@ const SUPABASE_URL="https://sxtrxqztcadwjoyftmlg.supabase.co";
 const SUPABASE_KEY="sb_publishable_d_3FgchBD14GQxLjVzMPMA_F8ifg5E3";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-var S=null;try{S=JSON.parse(localStorage.getItem("nutritionPro2")||"null")}catch(e){}
+var S=null;try{S=JSON.parse(localStorage.getItem("nutritionPro3")||"null")}catch(e){}
 if(!S)S={entries:[],weights:{},water:{},goals:{kcal:2200,p:140,c:250,f:70},selected:"燕麦片",customFoods:[]};
 S.entries=S.entries||[];S.weights=S.weights||{};S.water=S.water||{};S.goals=S.goals||{kcal:2200,p:140,c:250,f:70};S.customFoods=S.customFoods||[];
 function $(id){return document.getElementById(id)}
 function day(){let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function save(){try{localStorage.setItem("nutritionPro2",JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem("nutritionPro3",JSON.stringify(S))}catch(e){}}
 function food(){return FOODS.find(f=>f.name===S.selected)||S.customFoods.find(f=>f.name===S.selected)||FOODS[0]}
 function totals(d=day()){let a={kcal:0,p:0,c:0,f:0};S.entries.forEach(e=>{if(e.date===d){a.kcal+=+e.kcal||0;a.p+=+e.p||0;a.c+=+e.c||0;a.f+=+e.f||0}});return a}
 function calc(){let f=food(),m=(+$("grams").value||0)/100;return{kcal:f.kcal*m,p:f.p*m,c:f.c*m,f:f.f*m}}
@@ -99,8 +99,9 @@ function render(){
 function foodList(){
  let term=($("foodSearch").value||"").trim().toLowerCase(), all=FOODS.concat(S.customFoods);
  let arr=all.filter(f=>(f.name+f.cat).toLowerCase().includes(term));
- $("foodList").innerHTML=arr.map((f,i)=>`<div class="fooditem"><div><b>${esc(f.name)}</b><div class="cat">${esc(f.cat)} · ${f.kcal} kcal /100g · P ${f.p} · C ${f.c} · F ${f.f}</div></div><button class="btn secondary" data-food="${esc(f.name)}">选择</button></div>`).join("")||"<div class='customHint'>没有找到</div>";
+ $("foodList").innerHTML=arr.map(f=>`<div class="fooditem"><div><b>${esc(f.name)}</b><div class="cat">${esc(f.cat)} · ${f.kcal} kcal /100g · P ${f.p} · C ${f.c} · F ${f.f}</div></div><div style="display:flex;gap:6px"><button class="btn secondary" data-food="${esc(f.name)}">选择</button>${S.customFoods.some(x=>x.name===f.name)?`<button class="btn secondary" data-del-food="${esc(f.name)}">删</button>`:""}</div></div>`).join("")||"<div class='customHint'>没有找到</div>";
  document.querySelectorAll("[data-food]").forEach(b=>b.onclick=()=>{S.selected=b.dataset.food;save();foodDlg.close();render()});
+ document.querySelectorAll("[data-del-food]").forEach(b=>b.onclick=async()=>{let name=b.dataset.delFood,f=S.customFoods.find(x=>x.name===name);if(!f)return;if(!confirm("删除自定义食物「"+name+"」？"))return;S.customFoods=S.customFoods.filter(x=>x!==f);save();let u=await getUser();if(u&&f.id)await sb.from("custom_foods").delete().eq("user_id",u.id).eq("id",f.id);foodList();render();toast("已删除")});
 }
 function delEntry(id){
  let e=S.entries.find(x=>String(x.id)===String(id));
@@ -119,44 +120,51 @@ function draw(mode){
  c.fillStyle="#777a7e";c.font="11px -apple-system,BlinkMacSystemFont,sans-serif";labels.forEach((lab,i)=>{if(i===0||i===labels.length-1||i===Math.floor(labels.length/2)){let x=pad.l+(rangeDays===1?0:i/(rangeDays-1))*cw;c.fillText(lab,x-12,h-7)}})
 }
 function updateAccountUI(){sb.auth.getSession().then(({data})=>{let u=data.session?.user;$("accStatus").textContent=u?`已登录：${u.email}`:"未登录";$("logoutBtn").style.display=u?"block":"none";$("cloudStatus").textContent=u?"☁︎ 云端已登录，数据会自动同步":"本地数据正常保存 · 登录后可跨设备同步"})}
+let syncBusy=false;
+function cloudErr(e){console.error(e);$("cloudStatus").textContent="☁︎ 云端同步失败，本地数据仍可用"}
+async function getUser(){try{let {data:{session}}=await sb.auth.getSession();return session?.user||null}catch(e){return null}}
+
 async function cloudLoadOrMigrate(){
- let {data:{session}}=await sb.auth.getSession();if(!session)return;
- let uid=session.user.id;
+ let u=await getUser();if(!u||syncBusy)return;syncBusy=true;
  try{
-  let [{data:fe,error:e1},{data:cf,error:e2},{data:we,error:e3},{data:wi,error:e4},{data:go,error:e5}]=await Promise.all([
-   sb.from("food_entries").select("*").eq("user_id",uid),sb.from("custom_foods").select("*").eq("user_id",uid),sb.from("water_entries").select("*").eq("user_id",uid),sb.from("weight_entries").select("*").eq("user_id",uid),sb.from("user_goals").select("*").eq("user_id",uid).maybeSingle()
+  let [fe,cf,wa,we,go]=await Promise.all([
+   sb.from("food_entries").select("*").eq("user_id",u.id).order("created_at",{ascending:true}),
+   sb.from("custom_foods").select("*").eq("user_id",u.id).order("name"),
+   sb.from("water_entries").select("*").eq("user_id",u.id),
+   sb.from("weight_entries").select("*").eq("user_id",u.id),
+   sb.from("user_goals").select("*").eq("user_id",u.id).maybeSingle()
   ]);
-  if(e1||e2||e3||e4){throw e1||e2||e3||e4}
-  let hasCloud=(fe?.length||cf?.length||we?.length||wi?.length||go);
-  let hasLocal=(S.entries.length||S.customFoods.length||Object.keys(S.water).length||Object.keys(S.weights).length);
-  if(!hasCloud&&hasLocal){await cloudPushAll();toast("本地数据已上传云端");return}
-  if(fe)S.entries=fe.map(x=>({id:x.id,date:x.entry_date,food:x.food,meal:x.meal,grams:x.grams,kcal:x.calories,p:x.protein,c:x.carbs,f:x.fat}));
-  if(cf)S.customFoods=cf.map(x=>({id:x.id,name:x.name,cat:x.category||"自定义",kcal:x.calories,p:x.protein,c:x.carbs,f:x.fat}));
-  if(we)we.forEach(x=>S.water[x.entry_date]=x.amount_ml);
-  if(wi)wi.forEach(x=>S.weights[x.entry_date]=x.weight);
-  if(go)S.goals={kcal:go.calories,p:go.protein,c:go.carbs,f:go.fat};
-  save();render();toast("云端数据已同步");
- }catch(err){console.error(err);$("cloudStatus").textContent="☁︎ 云端连接失败，仍可正常使用本地数据"}
+  for(let r of [fe,cf,wa,we,go])if(r.error)throw r.error;
+  let hasCloud=(fe.data?.length||0)+(cf.data?.length||0)+(wa.data?.length||0)+(we.data?.length||0)+(go.data?1:0);
+  let hasLocal=S.entries.length+S.customFoods.length+Object.keys(S.water).length+Object.keys(S.weights).length;
+  if(!hasCloud&&hasLocal){await cloudPushAll();toast("本地数据已上传云端");$("cloudStatus").textContent="☁︎ 已同步到云端";return}
+  S.entries=(fe.data||[]).map(x=>({id:x.id,date:x.entry_date,food:x.food,meal:x.meal,grams:+x.grams||0,kcal:+x.calories||0,p:+x.protein||0,c:+x.carbs||0,f:+x.fat||0}));
+  S.customFoods=(cf.data||[]).map(x=>({id:x.id,name:x.name,cat:x.category||"自定义",kcal:+x.calories||0,p:+x.protein||0,c:+x.carbs||0,f:+x.fat||0}));
+  S.water={};(wa.data||[]).forEach(x=>S.water[x.entry_date]=(S.water[x.entry_date]||0)+(+x.amount_ml||0));
+  S.weights={};(we.data||[]).forEach(x=>S.weights[x.entry_date]=+x.weight||0);
+  if(go.data)S.goals={kcal:+go.data.calories||2200,p:+go.data.protein||140,c:+go.data.carbs||250,f:+go.data.fat||70};
+  save();render();$("cloudStatus").textContent="☁︎ 云端已同步";toast("云端数据已同步");
+ }catch(e){cloudErr(e)}finally{syncBusy=false}
 }
 async function cloudPushAll(){
- let {data:{session}}=await sb.auth.getSession();if(!session)return;let uid=session.user.id;
- await sb.from("food_entries").delete().eq("user_id",uid);await sb.from("custom_foods").delete().eq("user_id",uid);
- for(const e of S.entries){let r=await sb.from("food_entries").insert({user_id:uid,entry_date:e.date,food:e.food,meal:e.meal,grams:e.grams,calories:e.kcal,protein:e.p,carbs:e.c,fat:e.fat}).select("id").single();if(!r.error&&r.data)e.id=r.data.id}
- for(const f of S.customFoods){let r=await sb.from("custom_foods").insert({user_id:uid,name:f.name,category:f.cat||"自定义",calories:f.kcal,protein:f.p,carbs:f.c,fat:f.f}).select("id").single();if(!r.error&&r.data)f.id=r.data.id}
- for(const [date,amount] of Object.entries(S.water)){await sb.from("water_entries").delete().eq("user_id",uid).eq("entry_date",date);await sb.from("water_entries").insert({user_id:uid,entry_date:date,amount_ml:amount})}
- for(const [date,weight] of Object.entries(S.weights)){await sb.from("weight_entries").delete().eq("user_id",uid).eq("entry_date",date);await sb.from("weight_entries").insert({user_id:uid,entry_date:date,weight})}
- await sb.from("user_goals").upsert({user_id:uid,calories:S.goals.kcal,protein:S.goals.p,carbs:S.goals.c,fat:S.goals.f},{onConflict:"user_id"});save()
+ let u=await getUser();if(!u)return;let uid=u.id;
+ for(let t of ["food_entries","custom_foods","water_entries","weight_entries","user_goals"]){let r=await sb.from(t).delete().eq("user_id",uid);if(r.error)throw r.error}
+ if(S.entries.length){let r=await sb.from("food_entries").insert(S.entries.map(e=>({user_id:uid,entry_date:e.date,food:e.food,meal:e.meal,grams:+e.grams||0,calories:+e.kcal||0,protein:+e.p||0,carbs:+e.c||0,fat:+e.f||0}))).select("id");if(r.error)throw r.error;if(r.data)S.entries.forEach((e,i)=>e.id=r.data[i]?.id||e.id)}
+ if(S.customFoods.length){let r=await sb.from("custom_foods").insert(S.customFoods.map(f=>({user_id:uid,name:f.name,category:f.cat||"自定义",calories:+f.kcal||0,protein:+f.p||0,carbs:+f.c||0,fat:+f.f||0}))).select("id");if(r.error)throw r.error;if(r.data)S.customFoods.forEach((f,i)=>f.id=r.data[i]?.id||f.id)}
+ let wr=Object.entries(S.water).filter(x=>+x[1]>0).map(x=>({user_id:uid,entry_date:x[0],amount_ml:+x[1]}));if(wr.length){let r=await sb.from("water_entries").insert(wr);if(r.error)throw r.error}
+ let ir=Object.entries(S.weights).filter(x=>+x[1]>0).map(x=>({user_id:uid,entry_date:x[0],weight:+x[1]}));if(ir.length){let r=await sb.from("weight_entries").insert(ir);if(r.error)throw r.error}
+ let g=await sb.from("user_goals").upsert({user_id:uid,calories:+S.goals.kcal||2200,protein:+S.goals.p||140,carbs:+S.goals.c||250,fat:+S.goals.f||70},{onConflict:"user_id"});if(g.error)throw g.error
+ save()
 }
-async function syncEntry(e){try{let {data:{session}}=await sb.auth.getSession();if(!session)return;let r=await sb.from("food_entries").insert({user_id:session.user.id,entry_date:e.date,food:e.food,meal:e.meal,grams:e.grams,calories:e.kcal,protein:e.p,carbs:e.c,fat:e.f}).select("id").single();if(!r.error&&r.data){e.id=r.data.id;save()}else throw r.error}catch(err){console.log(err)}}
-async function syncDeleteEntry(e){if(!e?.id)return;try{await sb.from("food_entries").delete().eq("id",e.id)}catch(err){}}
-async function syncGoals(){try{let {data:{session}}=await sb.auth.getSession();if(session)await sb.from("user_goals").upsert({user_id:session.user.id,calories:S.goals.kcal,protein:S.goals.p,carbs:S.goals.c,fat:S.goals.f},{onConflict:"user_id"})}catch(e){}}
-async function syncCustomFood(f){try{let {data:{session}}=await sb.auth.getSession();if(!session)return;let r=await sb.from("custom_foods").insert({user_id:session.user.id,name:f.name,category:f.cat||"自定义",calories:f.kcal,protein:f.p,carbs:f.c,fat:f.f}).select("id").single();if(!r.error&&r.data){f.id=r.data.id;save()}}catch(e){}}
-async function syncDayValues(){
- try{let {data:{session}}=await sb.auth.getSession();if(!session)return;let uid=session.user.id,d=day();
- await sb.from("water_entries").delete().eq("user_id",uid).eq("entry_date",d);await sb.from("water_entries").insert({user_id:uid,entry_date:d,amount_ml:S.water[d]||0});
- if(S.weights[d]!=null){await sb.from("weight_entries").delete().eq("user_id",uid).eq("entry_date",d);await sb.from("weight_entries").insert({user_id:uid,entry_date:d,weight:S.weights[d]})}
- }catch(e){}
-}
+async function syncEntry(e){let u=await getUser();if(!u)return;try{let r=await sb.from("food_entries").insert({user_id:u.id,entry_date:e.date,food:e.food,meal:e.meal,grams:+e.grams||0,calories:+e.kcal||0,protein:+e.p||0,carbs:+e.c||0,fat:+e.f||0}).select("id").single();if(r.error)throw r.error;e.id=r.data.id;save()}catch(x){cloudErr(x)}}
+async function syncDeleteEntry(e){let u=await getUser();if(!u||!e?.id)return;try{let r=await sb.from("food_entries").delete().eq("user_id",u.id).eq("id",e.id);if(r.error)throw r.error}catch(x){cloudErr(x)}}
+async function syncGoals(){let u=await getUser();if(!u)return;try{let r=await sb.from("user_goals").upsert({user_id:u.id,calories:+S.goals.kcal||2200,protein:+S.goals.p||140,carbs:+S.goals.c||250,fat:+S.goals.f||70},{onConflict:"user_id"});if(r.error)throw r.error}catch(x){cloudErr(x)}}
+async function syncCustomFood(f){let u=await getUser();if(!u)return;try{let r=await sb.from("custom_foods").insert({user_id:u.id,name:f.name,category:f.cat||"自定义",calories:+f.kcal||0,protein:+f.p||0,carbs:+f.c||0,fat:+f.f||0}).select("id").single();if(r.error)throw r.error;f.id=r.data.id;save()}catch(x){cloudErr(x)}}
+async function syncDayValues(){let u=await getUser();if(!u)return;let d=day();try{let a=await sb.from("water_entries").delete().eq("user_id",u.id).eq("entry_date",d);if(a.error)throw a.error;if((+S.water[d]||0)>0){let r=await sb.from("water_entries").insert({user_id:u.id,entry_date:d,amount_ml:+S.water[d]});if(r.error)throw r.error}let b=await sb.from("weight_entries").delete().eq("user_id",u.id).eq("entry_date",d);if(b.error)throw b.error;if((+S.weights[d]||0)>0){let r=await sb.from("weight_entries").insert({user_id:u.id,entry_date:d,weight:+S.weights[d]});if(r.error)throw r.error}}catch(x){cloudErr(x)}}
+
+
+$("addCustomFoodBtn").onclick=()=>{["fn","fk","fp","fc","ff"].forEach(id=>$(id).value="");customFoodDlg.showModal()}
+$("saveCustomFood").onclick=async()=>{let name=$("fn").value.trim(),k=+$("fk").value,p=+$("fp").value,c=+$("fc").value,f=+$("ff").value;if(!name)return toast("请输入食物名称");if([k,p,c,f].some(v=>!Number.isFinite(v)||v<0))return toast("请完整填写营养数据");if(S.customFoods.some(x=>x.name===name))return toast("已有同名自定义食物");let item={id:crypto.randomUUID(),name,cat:"自定义",kcal:k,p,c,f};S.customFoods.push(item);save();customFoodDlg.close();foodList();render();await syncCustomFood(item);toast("自定义食物已保存")}
 
 $("pick").onclick=()=>{foodDlg.showModal();foodList();$("foodSearch").focus()}
 $("foodSearch").oninput=foodList;
@@ -175,11 +183,10 @@ document.querySelectorAll(".range").forEach(b=>b.onclick=()=>{document.querySele
 window.addEventListener("resize",()=>draw(currentChart));
 
 $("account").onclick=()=>{updateAccountUI();accDlg.showModal()}
-$("loginBtn").onclick=async()=>{let email=$("email").value.trim(),password=$("password").value;if(!email||!password)return toast("请输入邮箱和密码");let r=await sb.auth.signInWithPassword({email,password});if(r.error)return toast(r.error.message);accDlg.close();await cloudLoadOrMigrate();toast("登录成功")}
-$("signupBtn").onclick=async()=>{let email=$("email").value.trim(),password=$("password").value;if(!email||!password)return toast("请输入邮箱和密码");if(password.length<6)return toast("密码至少6位");let r=await sb.auth.signUp({email,password});if(r.error)return toast(r.error.message);toast(r.data.session?"注册成功":"注册成功，请查收邮箱验证邮件")}
-$("logoutBtn").onclick=async()=>{await sb.auth.signOut();accDlg.close();updateAccountUI();toast("已退出登录")}
-sb.auth.onAuthStateChange((event,session)=>{setTimeout(()=>{if(session)cloudLoadOrMigrate();updateAccountUI()},0)});
+$("loginBtn").onclick=async()=>{let email=$("email").value.trim(),password=$("password").value;if(!email||!password)return toast("请输入邮箱和密码");$("loginBtn").disabled=true;let r=await sb.auth.signInWithPassword({email,password});$("loginBtn").disabled=false;if(r.error)return toast(r.error.message);accDlg.close();await cloudLoadOrMigrate();toast("登录成功")}
+$("signupBtn").onclick=async()=>{let email=$("email").value.trim(),password=$("password").value;if(!email||!password)return toast("请输入邮箱和密码");if(password.length<6)return toast("密码至少6位");$("signupBtn").disabled=true;let r=await sb.auth.signUp({email,password});$("signupBtn").disabled=false;if(r.error)return toast(r.error.message);if(r.data.session){accDlg.close();await cloudLoadOrMigrate();toast("注册成功")}else toast("注册成功，请查收邮箱验证邮件")}
+$("logoutBtn").onclick=async()=>{await sb.auth.signOut();S={entries:[],weights:{},water:{},goals:{kcal:2200,p:140,c:250,f:70},selected:"燕麦片",customFoods:[]};save();render();accDlg.close();toast("已退出登录")}
+sb.auth.onAuthStateChange((event,session)=>{setTimeout(()=>{updateAccountUI();if(session&&(event==="SIGNED_IN"||event==="INITIAL_SESSION"))cloudLoadOrMigrate()},0)});
 
-render();
-sb.auth.getSession().then(({data:{session}}=>{if(session)cloudLoadOrMigrate()});
+render();updateAccountUI();
 </script></body></html>
